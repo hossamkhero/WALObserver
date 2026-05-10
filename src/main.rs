@@ -3,7 +3,8 @@ mod collectors;
 use std::{env, time::Duration};
 
 use collectors::pg_stat::pg_stat_wal::{PgStatWalCollector, PgStatWalRow};
-use collectors::settings::{SettingsCollector, PgSettingRow};
+use collectors::settings::{PgSettingRow, SettingsCollector};
+use collectors::wal_dir::{WalDirCollector, WalDirStats};
 
 use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 use tokio::time::sleep;
@@ -32,29 +33,41 @@ const INTERVAL: Duration = Duration::new(1, 0);
 async fn main() {
     let pool = connect_db().await;
 
-    loop {
-        let wal_collector: PgStatWalRow = match PgStatWalCollector::collect(&pool).await {
-            Ok(wal_collector) => wal_collector,
-            Err(err) => {
-                eprintln!("failed to collect pg_stat_wal: {err}");
-                std::process::exit(1);
-            }
-        };
+    let wal_dir_collector: WalDirStats = match WalDirCollector::collect() {
+        Ok(wal_dir_collector) => wal_dir_collector,
+        Err(err) => {
+            eprintln!("failed to collect pg_wal filesystem stats: {err}");
+            std::process::exit(1);
+        }
+    };
 
-        let settings_collector: Vec<PgSettingRow> = match SettingsCollector::collect(&pool).await {
-            Ok(settings_collector) => settings_collector,
-            Err(err) => {
-                eprintln!("failed to collect pg_settings: {err}");
-                std::process::exit(1);
-            }
-        };
+    println!("{wal_dir_collector:#?}");
 
-        println!("{wal_collector:#?}");
-
-        settings_collector.iter().for_each(|s| {
-            println!("{s:#?}");
-        });
-
-        sleep(INTERVAL).await;
-    }
+    //loop {
+    //    let wal_collector: PgStatWalRow = match PgStatWalCollector::collect(&pool).await {
+    //        Ok(wal_collector) => wal_collector,
+    //        Err(err) => {
+    //            eprintln!("failed to collect pg_stat_wal: {err}");
+    //            std::process::exit(1);
+    //        }
+    //    };
+    //
+    //    let settings_collector: Vec<PgSettingRow> = match SettingsCollector::collect(&pool).await {
+    //        Ok(settings_collector) => settings_collector,
+    //        Err(err) => {
+    //            eprintln!("failed to collect pg_settings: {err}");
+    //            std::process::exit(1);
+    //        }
+    //    };
+    //
+    //    println!("{wal_collector:#?}");
+    //
+    //    settings_collector.iter().for_each(|s| {
+    //        println!("{s:#?}");
+    //    });
+    //
+    //
+    //    sleep(INTERVAL).await;
+    //}
+    //
 }
