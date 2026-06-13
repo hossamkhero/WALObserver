@@ -1,6 +1,6 @@
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgStatRecoveryPrefetchRow {
     pub prefetch: i64,
     pub hit: i64,

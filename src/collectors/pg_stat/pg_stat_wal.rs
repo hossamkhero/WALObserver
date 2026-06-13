@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, FromRow)]
 pub struct PgStatWalRow {
     pub wal_records: i64,
     pub wal_fpi: i64,

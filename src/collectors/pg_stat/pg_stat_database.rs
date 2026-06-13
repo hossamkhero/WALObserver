@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgStatDatabaseRow {
     pub datname: String,
     pub numbackends: i32,
@@ -38,7 +38,8 @@ impl PgStatDatabaseCollector {
                 deadlocks,
                 stats_reset
             FROM pg_stat_database
-            WHERE datname IS NOT NULL",
+            WHERE datname IS NOT NULL
+            ORDER BY datname",
         )
         .fetch_all(pool)
         .await

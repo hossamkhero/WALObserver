@@ -1,6 +1,6 @@
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgStatUserTablesRow {
     pub schemaname: String,
     pub relname: String,
@@ -38,7 +38,8 @@ impl PgStatUserTablesCollector {
                 autovacuum_count,
                 analyze_count,
                 autoanalyze_count
-            FROM pg_stat_user_tables",
+            FROM pg_stat_user_tables
+            ORDER BY schemaname, relname",
         )
         .fetch_all(pool)
         .await

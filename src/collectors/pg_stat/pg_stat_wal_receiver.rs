@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgStatWalReceiverRow {
     pub pid: i32,
     pub status: String,

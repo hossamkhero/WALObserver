@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgStatActivityRow {
     pub pid: i32,
     pub datname: Option<String>,
@@ -31,7 +31,8 @@ impl PgStatActivityCollector {
                 xact_start,
                 query_start,
                 query
-            FROM pg_stat_activity",
+            FROM pg_stat_activity
+            ORDER BY pid",
         )
         .fetch_all(pool)
         .await

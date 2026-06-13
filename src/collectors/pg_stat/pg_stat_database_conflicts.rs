@@ -1,6 +1,6 @@
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgStatDatabaseConflictsRow {
     pub datname: String,
     pub confl_tablespace: i64,
@@ -26,7 +26,8 @@ impl PgStatDatabaseConflictsCollector {
                 confl_snapshot,
                 confl_bufferpin,
                 confl_deadlock
-            FROM pg_stat_database_conflicts",
+            FROM pg_stat_database_conflicts
+            ORDER BY datname",
         )
         .fetch_all(pool)
         .await

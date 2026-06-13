@@ -5,7 +5,7 @@ use std::io;
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WalDirStats {
     pub total_size_logical: u64,
     pub total_size_physical: u64,

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, FromRow)]
 pub struct PgStatBgwriterRow {
     pub checkpoints_timed: i64,
     pub checkpoints_req: i64,

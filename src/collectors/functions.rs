@@ -3,7 +3,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct WalFunctionsRow {
     pub is_in_recovery: bool,
     pub current_wal_lsn: Option<String>,

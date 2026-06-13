@@ -1,6 +1,6 @@
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgStatReplicationRow {
     pub pid: i32,
     pub usename: String,
@@ -30,7 +30,8 @@ impl PgStatReplicationCollector {
                 write_lsn::text AS write_lsn,
                 flush_lsn::text AS flush_lsn,
                 replay_lsn::text AS replay_lsn
-            FROM pg_stat_replication",
+            FROM pg_stat_replication
+            ORDER BY pid",
         )
         .fetch_all(pool)
         .await

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgStatReplicationSlotsRow {
     pub slot_name: String,
     pub spill_txns: i64,
@@ -34,7 +34,8 @@ impl PgStatReplicationSlotsCollector {
                 total_txns,
                 total_bytes,
                 stats_reset
-            FROM pg_stat_replication_slots",
+            FROM pg_stat_replication_slots
+            ORDER BY slot_name",
         )
         .fetch_all(pool)
         .await

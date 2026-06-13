@@ -1,6 +1,6 @@
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct PgReplicationSlotsRow {
     pub slot_name: String,
     pub plugin: Option<String>,
@@ -32,7 +32,8 @@ impl PgReplicationSlotsCollector {
                 catalog_xmin::text AS catalog_xmin,
                 restart_lsn::text AS restart_lsn,
                 confirmed_flush_lsn::text AS confirmed_flush_lsn
-            FROM pg_replication_slots",
+            FROM pg_replication_slots
+            ORDER BY slot_name",
         )
         .fetch_all(pool)
         .await
