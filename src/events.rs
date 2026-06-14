@@ -1,12 +1,13 @@
 use crate::collectors::functions::WalFunctionsRow;
+use rkyv::{Archive, Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Archive, Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DbRole {
     Primary,
     Standby,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Archive, Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub enum EventSnapshot {
     Disconnected,
     Reconnected,

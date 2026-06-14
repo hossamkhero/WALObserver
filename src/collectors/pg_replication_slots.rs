@@ -1,6 +1,7 @@
+use serde::Serialize;
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Serialize)]
 pub struct PgReplicationSlotsRow {
     pub slot_name: String,
     pub plugin: Option<String>,

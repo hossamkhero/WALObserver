@@ -1,7 +1,11 @@
+use crate::events::EventSnapshot;
+use crate::tick::{StoredSettingsSnapshot, StoredTickSnapshot};
+use rkyv::{Archive, Serialize};
 use std::{
     fs::{self, OpenOptions},
     io::{self, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 // Wal Inspector storage lives under its own hidden directory.
@@ -13,6 +17,11 @@ const CHECKPOINT_FILENAME: &str = "checkpoints.log";
 const LOG_MAGIC: [u8; 4] = *b"PWIL";
 const CHECKPOINT_MAGIC: [u8; 4] = *b"PWIC";
 const STORAGE_FORMAT_VERSION: u16 = 1;
+const RECORD_HEADER_LEN: u16 = 24;
+
+pub const RECORD_KIND_TICK_SNAPSHOT: u16 = 1;
+pub const RECORD_KIND_SETTINGS_SNAPSHOT: u16 = 2;
+pub const RECORD_KIND_EVENT_SNAPSHOT: u16 = 3;
 
 // Both files start with a fixed 32-byte header for easy future extension.
 const FILE_HEADER_LEN: u16 = 32;
@@ -81,4 +90,65 @@ pub fn init_storage() -> io::Result<(PathBuf, PathBuf)> {
     }
 
     Ok((log_path, checkpoint_path))
+}
+
+pub fn append_tick_snapshot(log_path: &Path, payload: &StoredTickSnapshot) -> io::Result<()> {
+    append_rkyv_record(log_path, RECORD_KIND_TICK_SNAPSHOT, payload)
+}
+
+pub fn append_settings_snapshot(
+    log_path: &Path,
+    payload: &StoredSettingsSnapshot,
+) -> io::Result<()> {
+    append_rkyv_record(log_path, RECORD_KIND_SETTINGS_SNAPSHOT, payload)
+}
+
+pub fn append_event_snapshot(log_path: &Path, payload: &EventSnapshot) -> io::Result<()> {
+    append_rkyv_record(log_path, RECORD_KIND_EVENT_SNAPSHOT, payload)
+}
+
+fn append_rkyv_record<T>(log_path: &Path, kind: u16, payload: &T) -> io::Result<()>
+where
+    T: Archive + Serialize<rkyv::ser::serializers::AllocSerializer<256>>,
+{
+    let payload_bytes = rkyv::to_bytes::<_, 256>(payload)
+        .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))?;
+
+    append_record(log_path, kind, 0, now_unix_ms(), payload_bytes.as_slice())
+}
+
+fn append_record(
+    log_path: &Path,
+    kind: u16,
+    flags: u16,
+    timestamp_ms: u64,
+    payload_bytes: &[u8],
+) -> io::Result<()> {
+    let payload_len: u32 = payload_bytes
+        .len()
+        .try_into()
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "payload too large"))?;
+
+    let mut header = [0_u8; RECORD_HEADER_LEN as usize];
+    header[0..2].copy_from_slice(&kind.to_le_bytes());
+    header[2..4].copy_from_slice(&flags.to_le_bytes());
+    header[4..6].copy_from_slice(&RECORD_HEADER_LEN.to_le_bytes());
+    header[6..8].copy_from_slice(&0_u16.to_le_bytes());
+    header[8..16].copy_from_slice(&timestamp_ms.to_le_bytes());
+    header[16..20].copy_from_slice(&payload_len.to_le_bytes());
+    header[20..24].copy_from_slice(&0_u32.to_le_bytes());
+
+    let mut file = OpenOptions::new().append(true).open(log_path)?;
+    file.write_all(&header)?;
+    file.write_all(payload_bytes)?;
+    file.flush()?;
+
+    Ok(())
+}
+
+fn now_unix_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
 }

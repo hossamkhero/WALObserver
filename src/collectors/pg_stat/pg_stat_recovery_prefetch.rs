@@ -1,6 +1,7 @@
+use serde::Serialize;
 use sqlx::{FromRow, Pool, Postgres};
 
-#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Serialize)]
 pub struct PgStatRecoveryPrefetchRow {
     pub prefetch: i64,
     pub hit: i64,
