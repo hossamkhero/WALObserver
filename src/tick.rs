@@ -1,5 +1,5 @@
-use crate::collectors::*;
 use crate::collectors::pg_stat::*;
+use crate::collectors::*;
 use crate::events::DbRole;
 use chrono::{DateTime, Utc};
 use rkyv::{Archive, Deserialize, Serialize};
@@ -836,10 +836,19 @@ pub fn apply_tick_diff(last_tick: &mut TickData, current: &TickData, changed_mas
     apply_field_diff!(TICK_BIT_PG_STAT_BGWRITER, pg_stat_bgwriter);
     apply_field_diff!(TICK_BIT_PG_STAT_DATABASE, pg_stat_database);
     apply_field_diff!(TICK_BIT_PG_STAT_REPLICATION, pg_stat_replication);
-    apply_field_diff!(TICK_BIT_PG_STAT_REPLICATION_SLOTS, pg_stat_replication_slots);
+    apply_field_diff!(
+        TICK_BIT_PG_STAT_REPLICATION_SLOTS,
+        pg_stat_replication_slots
+    );
     apply_field_diff!(TICK_BIT_PG_STAT_USER_TABLES, pg_stat_user_tables);
-    apply_field_diff!(TICK_BIT_PG_STAT_DATABASE_CONFLICTS, pg_stat_database_conflicts);
-    apply_field_diff!(TICK_BIT_PG_STAT_RECOVERY_PREFETCH, pg_stat_recovery_prefetch);
+    apply_field_diff!(
+        TICK_BIT_PG_STAT_DATABASE_CONFLICTS,
+        pg_stat_database_conflicts
+    );
+    apply_field_diff!(
+        TICK_BIT_PG_STAT_RECOVERY_PREFETCH,
+        pg_stat_recovery_prefetch
+    );
     apply_field_diff!(TICK_BIT_PG_STAT_WAL_RECEIVER, pg_stat_wal_receiver);
 
     // Settings are carried separately from the tick changed-mask for now.

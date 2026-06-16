@@ -17,14 +17,14 @@ const CHECKPOINT_FILENAME: &str = "checkpoints.log";
 const LOG_MAGIC: [u8; 4] = *b"PWIL";
 const CHECKPOINT_MAGIC: [u8; 4] = *b"PWIC";
 const STORAGE_FORMAT_VERSION: u16 = 1;
-const RECORD_HEADER_LEN: u16 = 24;
+pub const RECORD_HEADER_LEN: u16 = 24;
 
 pub const RECORD_KIND_TICK_SNAPSHOT: u16 = 1;
 pub const RECORD_KIND_SETTINGS_SNAPSHOT: u16 = 2;
 pub const RECORD_KIND_EVENT_SNAPSHOT: u16 = 3;
 
 // Both files start with a fixed 32-byte header for easy future extension.
-const FILE_HEADER_LEN: u16 = 32;
+pub const FILE_HEADER_LEN: u16 = 32;
 
 // Main log header:
 // - magic
@@ -71,25 +71,43 @@ fn checkpoint_header_bytes() -> [u8; FILE_HEADER_LEN as usize] {
 }
 
 pub fn init_storage() -> io::Result<(PathBuf, PathBuf)> {
-    let storage_dir = PathBuf::from(STORAGE_DIR);
+    let storage_dir = storage_dir_path();
     fs::create_dir_all(&storage_dir)?;
 
-    let log_path = storage_dir.join(LOG_FILENAME);
-    let checkpoint_path = storage_dir.join(CHECKPOINT_FILENAME);
+    let log_path = main_log_path();
+    let checkpoint_path = checkpoint_path();
 
     if !log_path.exists() {
-        let mut file = OpenOptions::new().write(true).create_new(true).open(&log_path)?;
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&log_path)?;
         file.write_all(&main_log_header_bytes())?;
         file.flush()?;
     }
 
     if !checkpoint_path.exists() {
-        let mut file = OpenOptions::new().write(true).create_new(true).open(&checkpoint_path)?;
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&checkpoint_path)?;
         file.write_all(&checkpoint_header_bytes())?;
         file.flush()?;
     }
 
     Ok((log_path, checkpoint_path))
+}
+
+pub fn storage_dir_path() -> PathBuf {
+    PathBuf::from(STORAGE_DIR)
+}
+
+pub fn main_log_path() -> PathBuf {
+    storage_dir_path().join(LOG_FILENAME)
+}
+
+pub fn checkpoint_path() -> PathBuf {
+    storage_dir_path().join(CHECKPOINT_FILENAME)
 }
 
 pub fn append_tick_snapshot(log_path: &Path, payload: &StoredTickSnapshot) -> io::Result<()> {

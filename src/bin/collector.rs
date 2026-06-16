@@ -85,12 +85,16 @@ async fn main() -> anyhow::Result<()> {
             println!("{event:#?}");
         }
 
-        let settings_changed_mask = diff_settings(last_tick.as_ref().map(|tick| tick.settings.as_slice()), &tick.settings);
+        let settings_changed_mask = diff_settings(
+            last_tick.as_ref().map(|tick| tick.settings.as_slice()),
+            &tick.settings,
+        );
         let changed_mask = diff_tick(last_tick.as_ref(), &tick);
         let stored_tick = build_stored_tick_snapshot(&tick, changed_mask);
 
         if settings_changed_mask != 0 {
-            let stored_settings = build_stored_settings_snapshot(&tick.settings, settings_changed_mask);
+            let stored_settings =
+                build_stored_settings_snapshot(&tick.settings, settings_changed_mask);
             append_settings_snapshot(&log_path, &stored_settings)?;
         }
 
