@@ -20,6 +20,8 @@ use std::{collections::BTreeMap, env, time::{Duration as StdDuration, Instant}};
 use tokio::runtime::Builder;
 use tokio::time::{Duration, timeout};
 
+const DEFAULT_VIEWPORT_CAP_MS: f64 = 5.0 * 60_000.0;
+
 struct OverviewData {
     role: String,
     connection: String,
@@ -981,8 +983,9 @@ fn chart_viewport_width(area: Rect, series: &[(&str, &[SeriesPoint], Color)]) ->
     let visible_columns = area.width.saturating_sub(2).max(1) as f64;
     let avg_step = average_x_step(series).unwrap_or(1.0);
     let content_width = series_content_width(series).unwrap_or(avg_step);
+    let viewport_width = (visible_columns * avg_step).min(content_width).max(avg_step);
 
-    (visible_columns * avg_step).min(content_width).max(avg_step)
+    viewport_width.min(DEFAULT_VIEWPORT_CAP_MS).max(avg_step)
 }
 
 fn average_x_step(series: &[(&str, &[SeriesPoint], Color)]) -> Option<f64> {
