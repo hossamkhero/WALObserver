@@ -16,9 +16,7 @@ pub struct PgStatDatabaseConflictsCollector;
 impl PgStatDatabaseConflictsCollector {
     // Standby-oriented collector. Conflict counters matter when a replica is serving reads
     // while recovery/replay is trying to make progress.
-    pub async fn collect(
-        pool: &Pool<Postgres>,
-    ) -> Result<Vec<PgStatDatabaseConflictsRow>, sqlx::Error> {
+    pub async fn collect(pool: &Pool<Postgres>) -> Result<Vec<PgStatDatabaseConflictsRow>, sqlx::Error> {
         sqlx::query_as(
             "SELECT
                 datname,

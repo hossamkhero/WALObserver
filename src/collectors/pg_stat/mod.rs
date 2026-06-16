@@ -16,9 +16,7 @@ pub use pg_stat_activity::{PgStatActivityCollector, PgStatActivityRow};
 pub use pg_stat_archiver::{PgStatArchiverCollector, PgStatArchiverRow};
 pub use pg_stat_bgwriter::{PgStatBgwriterCollector, PgStatBgwriterRow};
 pub use pg_stat_database::{PgStatDatabaseCollector, PgStatDatabaseRow};
-pub use pg_stat_database_conflicts::{
-    PgStatDatabaseConflictsCollector, PgStatDatabaseConflictsRow,
-};
+pub use pg_stat_database_conflicts::{PgStatDatabaseConflictsCollector, PgStatDatabaseConflictsRow};
 pub use pg_stat_recovery_prefetch::{PgStatRecoveryPrefetchCollector, PgStatRecoveryPrefetchRow};
 pub use pg_stat_replication::{PgStatReplicationCollector, PgStatReplicationRow};
 pub use pg_stat_replication_slots::{PgStatReplicationSlotsCollector, PgStatReplicationSlotsRow};

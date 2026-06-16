@@ -14,6 +14,7 @@ pub struct SlotRetentionChart {
     pub worst_slot_lag_bytes: Vec<SeriesPoint>,
     pub wal_dir_file_count: Vec<SeriesPoint>,
     pub latest_worst_slot_name: Option<String>,
+    pub latest_worst_slot_active: Option<bool>,
 }
 
 pub struct WalAmplificationChart {
@@ -49,6 +50,7 @@ pub fn build_charts(records: &[MainLogRecord]) -> ChartsData {
             worst_slot_lag_bytes: derive_worst_slot_lag_bytes(&ticks),
             wal_dir_file_count: derive_wal_dir_file_count(&ticks),
             latest_worst_slot_name: derive_latest_worst_slot_name(&ticks),
+            latest_worst_slot_active: derive_latest_worst_slot_active(&ticks),
         },
         wal_amplification: WalAmplificationChart {
             wal_bytes_per_record: derive_wal_bytes_per_record(&ticks),
@@ -99,17 +101,20 @@ fn derive_wal_records_per_sec(ticks: &[TickAt]) -> Vec<SeriesPoint> {
 }
 
 fn derive_worst_slot_lag_bytes(ticks: &[TickAt]) -> Vec<SeriesPoint> {
-    ticks.iter().filter_map(|tick| {
-        let current_lsn = tick.state.wal_functions.as_ref().and_then(|wal| wal.current_wal_lsn.as_deref()).and_then(parse_lsn)?;
-        let slots = tick.state.pg_replication_slots.as_ref()?;
-        let value = slots
-            .iter()
-            .filter_map(|slot| slot.restart_lsn.as_deref().and_then(parse_lsn))
-            .map(|restart_lsn| current_lsn.saturating_sub(restart_lsn) as f64)
-            .max_by(|a, b| a.partial_cmp(b).unwrap())?;
+    ticks
+        .iter()
+        .filter_map(|tick| {
+            let current_lsn = tick.state.wal_functions.as_ref().and_then(|wal| wal.current_wal_lsn.as_deref()).and_then(parse_lsn)?;
+            let slots = tick.state.pg_replication_slots.as_ref()?;
+            let value = slots
+                .iter()
+                .filter_map(|slot| slot.restart_lsn.as_deref().and_then(parse_lsn))
+                .map(|restart_lsn| current_lsn.saturating_sub(restart_lsn) as f64)
+                .max_by(|a, b| a.partial_cmp(b).unwrap())?;
 
-        Some(SeriesPoint { ts_ms: tick.ts_ms, value })
-    }).collect()
+            Some(SeriesPoint { ts_ms: tick.ts_ms, value })
+        })
+        .collect()
 }
 
 fn derive_wal_dir_file_count(ticks: &[TickAt]) -> Vec<SeriesPoint> {
@@ -136,6 +141,23 @@ fn derive_latest_worst_slot_name(ticks: &[TickAt]) -> Option<String> {
         .map(|(_, slot_name)| slot_name)
 }
 
+fn derive_latest_worst_slot_active(ticks: &[TickAt]) -> Option<bool> {
+    let latest_tick = ticks.last()?;
+    let current_lsn = latest_tick.state.wal_functions.as_ref().and_then(|wal| wal.current_wal_lsn.as_deref()).and_then(parse_lsn)?;
+
+    latest_tick
+        .state
+        .pg_replication_slots
+        .as_ref()?
+        .iter()
+        .filter_map(|slot| {
+            let restart_lsn = slot.restart_lsn.as_deref().and_then(parse_lsn)?;
+            Some((current_lsn.saturating_sub(restart_lsn), slot.active))
+        })
+        .max_by_key(|(lag, _)| *lag)
+        .map(|(_, active)| active)
+}
+
 fn derive_wal_bytes_per_record(ticks: &[TickAt]) -> Vec<SeriesPoint> {
     let bytes_per_sec = derive_wal_bytes_per_sec(ticks);
     let records_per_sec = derive_wal_records_per_sec(ticks);
@@ -143,22 +165,17 @@ fn derive_wal_bytes_per_record(ticks: &[TickAt]) -> Vec<SeriesPoint> {
     bytes_per_sec
         .into_iter()
         .zip(records_per_sec)
-        .filter_map(|(bytes, records)| {
-            if records.value > 0.0 {
-                Some(SeriesPoint { ts_ms: bytes.ts_ms, value: bytes.value / records.value })
-            } else {
-                None
-            }
-        })
+        .filter_map(
+            |(bytes, records)| {
+                if records.value > 0.0 { Some(SeriesPoint { ts_ms: bytes.ts_ms, value: bytes.value / records.value }) } else { None }
+            },
+        )
         .collect()
 }
 
 fn derive_updates_per_sec(ticks: &[TickAt]) -> Vec<SeriesPoint> {
     derive_rate_series(ticks, |tick| {
-        tick.state
-            .pg_stat_user_tables
-            .as_ref()
-            .map(|tables| tables.iter().map(|table| table.n_tup_upd).sum::<i64>() as f64)
+        tick.state.pg_stat_user_tables.as_ref().map(|tables| tables.iter().map(|table| table.n_tup_upd).sum::<i64>() as f64)
     })
 }
 
@@ -198,23 +215,13 @@ fn derive_hot_update_ratio(ticks: &[TickAt]) -> Vec<SeriesPoint> {
 
 fn derive_receive_lsn_progress(ticks: &[TickAt]) -> Vec<SeriesPoint> {
     derive_rate_series(ticks, |tick| {
-        tick.state
-            .wal_functions
-            .as_ref()
-            .and_then(|wal| wal.last_wal_receive_lsn.as_deref())
-            .and_then(parse_lsn)
-            .map(|lsn| lsn as f64)
+        tick.state.wal_functions.as_ref().and_then(|wal| wal.last_wal_receive_lsn.as_deref()).and_then(parse_lsn).map(|lsn| lsn as f64)
     })
 }
 
 fn derive_replay_lsn_progress(ticks: &[TickAt]) -> Vec<SeriesPoint> {
     derive_rate_series(ticks, |tick| {
-        tick.state
-            .wal_functions
-            .as_ref()
-            .and_then(|wal| wal.last_wal_replay_lsn.as_deref())
-            .and_then(parse_lsn)
-            .map(|lsn| lsn as f64)
+        tick.state.wal_functions.as_ref().and_then(|wal| wal.last_wal_replay_lsn.as_deref()).and_then(parse_lsn).map(|lsn| lsn as f64)
     })
 }
 

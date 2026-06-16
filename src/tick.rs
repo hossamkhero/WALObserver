@@ -548,10 +548,7 @@ impl From<&PgStatWalReceiverRow> for StoredPgStatWalReceiverRow {
     }
 }
 
-pub async fn collect_tick(
-    pool: &Pool<Postgres>,
-    role: Option<DbRole>,
-) -> Result<TickData, sqlx::Error> {
+pub async fn collect_tick(pool: &Pool<Postgres>, role: Option<DbRole>) -> Result<TickData, sqlx::Error> {
     let wal_dir = WalDirCollector::collect().map_err(sqlx::Error::Io)?;
     let wal_functions = WalFunctionsCollector::collect(pool).await?;
     let pg_stat_wal = PgStatWalCollector::collect(pool).await?;
@@ -649,102 +646,52 @@ pub fn diff_tick(previous: Option<&TickData>, current: &TickData) -> u16 {
 pub fn build_stored_tick_snapshot(current: &TickData, changed_mask: u16) -> StoredTickSnapshot {
     macro_rules! changed_value {
         ($bit:expr, $value:expr) => {
-            if changed_mask & $bit != 0 {
-                Some($value)
-            } else {
-                None
-            }
+            if changed_mask & $bit != 0 { Some($value) } else { None }
         };
     }
 
     StoredTickSnapshot {
         changed_mask,
         wal_dir: changed_value!(TICK_BIT_WAL_DIR, StoredWalDirStats::from(&current.wal_dir)),
-        wal_functions: changed_value!(
-            TICK_BIT_WAL_FUNCTIONS,
-            StoredWalFunctionsRow::from(&current.wal_functions)
-        ),
-        pg_stat_wal: changed_value!(
-            TICK_BIT_PG_STAT_WAL,
-            StoredPgStatWalRow::from(&current.pg_stat_wal)
-        ),
+        wal_functions: changed_value!(TICK_BIT_WAL_FUNCTIONS, StoredWalFunctionsRow::from(&current.wal_functions)),
+        pg_stat_wal: changed_value!(TICK_BIT_PG_STAT_WAL, StoredPgStatWalRow::from(&current.pg_stat_wal)),
         pg_replication_slots: changed_value!(
             TICK_BIT_PG_REPLICATION_SLOTS,
-            current
-                .pg_replication_slots
-                .iter()
-                .map(StoredPgReplicationSlotsRow::from)
-                .collect()
+            current.pg_replication_slots.iter().map(StoredPgReplicationSlotsRow::from).collect()
         ),
         pg_stat_activity: changed_value!(
             TICK_BIT_PG_STAT_ACTIVITY,
-            current
-                .pg_stat_activity
-                .iter()
-                .map(StoredPgStatActivityRow::from)
-                .collect()
+            current.pg_stat_activity.iter().map(StoredPgStatActivityRow::from).collect()
         ),
-        pg_stat_archiver: changed_value!(
-            TICK_BIT_PG_STAT_ARCHIVER,
-            StoredPgStatArchiverRow::from(&current.pg_stat_archiver)
-        ),
-        pg_stat_bgwriter: changed_value!(
-            TICK_BIT_PG_STAT_BGWRITER,
-            StoredPgStatBgwriterRow::from(&current.pg_stat_bgwriter)
-        ),
+        pg_stat_archiver: changed_value!(TICK_BIT_PG_STAT_ARCHIVER, StoredPgStatArchiverRow::from(&current.pg_stat_archiver)),
+        pg_stat_bgwriter: changed_value!(TICK_BIT_PG_STAT_BGWRITER, StoredPgStatBgwriterRow::from(&current.pg_stat_bgwriter)),
         pg_stat_database: changed_value!(
             TICK_BIT_PG_STAT_DATABASE,
-            current
-                .pg_stat_database
-                .iter()
-                .map(StoredPgStatDatabaseRow::from)
-                .collect()
+            current.pg_stat_database.iter().map(StoredPgStatDatabaseRow::from).collect()
         ),
         pg_stat_replication: changed_value!(
             TICK_BIT_PG_STAT_REPLICATION,
-            current
-                .pg_stat_replication
-                .iter()
-                .map(StoredPgStatReplicationRow::from)
-                .collect()
+            current.pg_stat_replication.iter().map(StoredPgStatReplicationRow::from).collect()
         ),
         pg_stat_replication_slots: changed_value!(
             TICK_BIT_PG_STAT_REPLICATION_SLOTS,
-            current
-                .pg_stat_replication_slots
-                .iter()
-                .map(StoredPgStatReplicationSlotsRow::from)
-                .collect()
+            current.pg_stat_replication_slots.iter().map(StoredPgStatReplicationSlotsRow::from).collect()
         ),
         pg_stat_user_tables: changed_value!(
             TICK_BIT_PG_STAT_USER_TABLES,
-            current
-                .pg_stat_user_tables
-                .iter()
-                .map(StoredPgStatUserTablesRow::from)
-                .collect()
+            current.pg_stat_user_tables.iter().map(StoredPgStatUserTablesRow::from).collect()
         ),
         pg_stat_database_conflicts: changed_value!(
             TICK_BIT_PG_STAT_DATABASE_CONFLICTS,
-            current.pg_stat_database_conflicts.as_ref().map(|rows| {
-                rows.iter()
-                    .map(StoredPgStatDatabaseConflictsRow::from)
-                    .collect()
-            })
+            current.pg_stat_database_conflicts.as_ref().map(|rows| { rows.iter().map(StoredPgStatDatabaseConflictsRow::from).collect() })
         ),
         pg_stat_recovery_prefetch: changed_value!(
             TICK_BIT_PG_STAT_RECOVERY_PREFETCH,
-            current
-                .pg_stat_recovery_prefetch
-                .as_ref()
-                .map(StoredPgStatRecoveryPrefetchRow::from)
+            current.pg_stat_recovery_prefetch.as_ref().map(StoredPgStatRecoveryPrefetchRow::from)
         ),
         pg_stat_wal_receiver: changed_value!(
             TICK_BIT_PG_STAT_WAL_RECEIVER,
-            current
-                .pg_stat_wal_receiver
-                .as_ref()
-                .map(|row| row.as_ref().map(StoredPgStatWalReceiverRow::from))
+            current.pg_stat_wal_receiver.as_ref().map(|row| row.as_ref().map(StoredPgStatWalReceiverRow::from))
         ),
     }
 }
@@ -771,10 +718,7 @@ pub fn diff_settings(previous: Option<&[PgSettingRow]>, current: &[PgSettingRow]
     changed_mask
 }
 
-pub fn build_stored_settings_snapshot(
-    current: &[PgSettingRow],
-    changed_mask: u16,
-) -> StoredSettingsSnapshot {
+pub fn build_stored_settings_snapshot(current: &[PgSettingRow], changed_mask: u16) -> StoredSettingsSnapshot {
     let mut settings = Vec::new();
 
     for name in tracked_setting_names() {
@@ -789,21 +733,11 @@ pub fn build_stored_settings_snapshot(
         }
     }
 
-    StoredSettingsSnapshot {
-        changed_mask,
-        settings,
-    }
+    StoredSettingsSnapshot { changed_mask, settings }
 }
 
 fn tracked_setting_names() -> [&'static str; 6] {
-    [
-        "full_page_writes",
-        "checkpoint_timeout",
-        "max_wal_size",
-        "min_wal_size",
-        "wal_compression",
-        "synchronous_commit",
-    ]
+    ["full_page_writes", "checkpoint_timeout", "max_wal_size", "min_wal_size", "wal_compression", "synchronous_commit"]
 }
 
 fn setting_bit(name: &str) -> Option<u16> {
@@ -836,19 +770,10 @@ pub fn apply_tick_diff(last_tick: &mut TickData, current: &TickData, changed_mas
     apply_field_diff!(TICK_BIT_PG_STAT_BGWRITER, pg_stat_bgwriter);
     apply_field_diff!(TICK_BIT_PG_STAT_DATABASE, pg_stat_database);
     apply_field_diff!(TICK_BIT_PG_STAT_REPLICATION, pg_stat_replication);
-    apply_field_diff!(
-        TICK_BIT_PG_STAT_REPLICATION_SLOTS,
-        pg_stat_replication_slots
-    );
+    apply_field_diff!(TICK_BIT_PG_STAT_REPLICATION_SLOTS, pg_stat_replication_slots);
     apply_field_diff!(TICK_BIT_PG_STAT_USER_TABLES, pg_stat_user_tables);
-    apply_field_diff!(
-        TICK_BIT_PG_STAT_DATABASE_CONFLICTS,
-        pg_stat_database_conflicts
-    );
-    apply_field_diff!(
-        TICK_BIT_PG_STAT_RECOVERY_PREFETCH,
-        pg_stat_recovery_prefetch
-    );
+    apply_field_diff!(TICK_BIT_PG_STAT_DATABASE_CONFLICTS, pg_stat_database_conflicts);
+    apply_field_diff!(TICK_BIT_PG_STAT_RECOVERY_PREFETCH, pg_stat_recovery_prefetch);
     apply_field_diff!(TICK_BIT_PG_STAT_WAL_RECEIVER, pg_stat_wal_receiver);
 
     // Settings are carried separately from the tick changed-mask for now.
@@ -865,24 +790,12 @@ pub fn debug_print_tick(tick: &TickData) {
     println!();
     println!("---------- Collection Sizes ----------");
     println!("settings: {} rows", tick.settings.len());
-    println!(
-        "pg_replication_slots: {} rows",
-        tick.pg_replication_slots.len()
-    );
+    println!("pg_replication_slots: {} rows", tick.pg_replication_slots.len());
     println!("pg_stat_activity: {} rows", tick.pg_stat_activity.len());
     println!("pg_stat_database: {} rows", tick.pg_stat_database.len());
-    println!(
-        "pg_stat_replication: {} rows",
-        tick.pg_stat_replication.len()
-    );
-    println!(
-        "pg_stat_replication_slots: {} rows",
-        tick.pg_stat_replication_slots.len()
-    );
-    println!(
-        "pg_stat_user_tables: {} rows",
-        tick.pg_stat_user_tables.len()
-    );
+    println!("pg_stat_replication: {} rows", tick.pg_stat_replication.len());
+    println!("pg_stat_replication_slots: {} rows", tick.pg_stat_replication_slots.len());
+    println!("pg_stat_user_tables: {} rows", tick.pg_stat_user_tables.len());
     println!();
     println!("---------- Standby-Only State ----------");
     match &tick.pg_stat_database_conflicts {

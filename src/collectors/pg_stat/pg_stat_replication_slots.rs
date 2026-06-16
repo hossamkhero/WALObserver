@@ -19,9 +19,7 @@ pub struct PgStatReplicationSlotsRow {
 pub struct PgStatReplicationSlotsCollector;
 
 impl PgStatReplicationSlotsCollector {
-    pub async fn collect(
-        pool: &Pool<Postgres>,
-    ) -> Result<Vec<PgStatReplicationSlotsRow>, sqlx::Error> {
+    pub async fn collect(pool: &Pool<Postgres>) -> Result<Vec<PgStatReplicationSlotsRow>, sqlx::Error> {
         sqlx::query_as(
             "SELECT
                 slot_name,

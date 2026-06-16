@@ -25,14 +25,7 @@ impl SettingsCollector {
             WHERE name = ANY($1)
             ORDER BY name",
         )
-        .bind([
-            "full_page_writes",
-            "checkpoint_timeout",
-            "max_wal_size",
-            "min_wal_size",
-            "wal_compression",
-            "synchronous_commit",
-        ])
+        .bind(["full_page_writes", "checkpoint_timeout", "max_wal_size", "min_wal_size", "wal_compression", "synchronous_commit"])
         .fetch_all(pool)
         .await
     }

@@ -22,9 +22,7 @@ pub struct PgStatWalReceiverCollector;
 impl PgStatWalReceiverCollector {
     // Standby-oriented collector. This view describes the WAL receiver process, so it is
     // only meaningful on nodes that are receiving WAL from an upstream server.
-    pub async fn collect(
-        pool: &Pool<Postgres>,
-    ) -> Result<Option<PgStatWalReceiverRow>, sqlx::Error> {
+    pub async fn collect(pool: &Pool<Postgres>) -> Result<Option<PgStatWalReceiverRow>, sqlx::Error> {
         sqlx::query_as(
             "SELECT
                 pid,

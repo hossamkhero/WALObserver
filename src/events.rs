@@ -38,23 +38,13 @@ pub fn on_reconnect(state: &mut RuntimeState) -> Option<EventSnapshot> {
     }
 }
 
-pub fn on_role_observed(
-    state: &mut RuntimeState,
-    wal_functions: &WalFunctionsRow,
-) -> Option<EventSnapshot> {
-    let new_role = if wal_functions.is_in_recovery {
-        DbRole::Standby
-    } else {
-        DbRole::Primary
-    };
+pub fn on_role_observed(state: &mut RuntimeState, wal_functions: &WalFunctionsRow) -> Option<EventSnapshot> {
+    let new_role = if wal_functions.is_in_recovery { DbRole::Standby } else { DbRole::Primary };
 
     match state.role {
         Some(old_role) if old_role != new_role => {
             state.role = Some(new_role);
-            Some(EventSnapshot::RoleChanged {
-                old: old_role,
-                new: new_role,
-            })
+            Some(EventSnapshot::RoleChanged { old: old_role, new: new_role })
         }
         None => {
             state.role = Some(new_role);

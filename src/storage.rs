@@ -78,19 +78,13 @@ pub fn init_storage() -> io::Result<(PathBuf, PathBuf)> {
     let checkpoint_path = checkpoint_path();
 
     if !log_path.exists() {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&log_path)?;
+        let mut file = OpenOptions::new().write(true).create_new(true).open(&log_path)?;
         file.write_all(&main_log_header_bytes())?;
         file.flush()?;
     }
 
     if !checkpoint_path.exists() {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&checkpoint_path)?;
+        let mut file = OpenOptions::new().write(true).create_new(true).open(&checkpoint_path)?;
         file.write_all(&checkpoint_header_bytes())?;
         file.flush()?;
     }
@@ -114,10 +108,7 @@ pub fn append_tick_snapshot(log_path: &Path, payload: &StoredTickSnapshot) -> io
     append_rkyv_record(log_path, RECORD_KIND_TICK_SNAPSHOT, payload)
 }
 
-pub fn append_settings_snapshot(
-    log_path: &Path,
-    payload: &StoredSettingsSnapshot,
-) -> io::Result<()> {
+pub fn append_settings_snapshot(log_path: &Path, payload: &StoredSettingsSnapshot) -> io::Result<()> {
     append_rkyv_record(log_path, RECORD_KIND_SETTINGS_SNAPSHOT, payload)
 }
 
@@ -129,23 +120,13 @@ fn append_rkyv_record<T>(log_path: &Path, kind: u16, payload: &T) -> io::Result<
 where
     T: Archive + Serialize<rkyv::ser::serializers::AllocSerializer<256>>,
 {
-    let payload_bytes = rkyv::to_bytes::<_, 256>(payload)
-        .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))?;
+    let payload_bytes = rkyv::to_bytes::<_, 256>(payload).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))?;
 
     append_record(log_path, kind, 0, now_unix_ms(), payload_bytes.as_slice())
 }
 
-fn append_record(
-    log_path: &Path,
-    kind: u16,
-    flags: u16,
-    timestamp_ms: u64,
-    payload_bytes: &[u8],
-) -> io::Result<()> {
-    let payload_len: u32 = payload_bytes
-        .len()
-        .try_into()
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "payload too large"))?;
+fn append_record(log_path: &Path, kind: u16, flags: u16, timestamp_ms: u64, payload_bytes: &[u8]) -> io::Result<()> {
+    let payload_len: u32 = payload_bytes.len().try_into().map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "payload too large"))?;
 
     let mut header = [0_u8; RECORD_HEADER_LEN as usize];
     header[0..2].copy_from_slice(&kind.to_le_bytes());
@@ -165,8 +146,5 @@ fn append_record(
 }
 
 fn now_unix_ms() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as u64
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64
 }

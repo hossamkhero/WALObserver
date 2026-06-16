@@ -1,23 +1,16 @@
 use pg_wal_visualizer::events::{RuntimeState, on_disconnect, on_reconnect, on_role_observed};
-use pg_wal_visualizer::storage::{
-    append_event_snapshot, append_settings_snapshot, append_tick_snapshot, init_storage,
-};
+use pg_wal_visualizer::storage::{append_event_snapshot, append_settings_snapshot, append_tick_snapshot, init_storage};
 use pg_wal_visualizer::tick::{
-    TickData, apply_tick_diff, build_stored_settings_snapshot, build_stored_tick_snapshot,
-    collect_tick, diff_settings, diff_tick,
+    TickData, apply_tick_diff, build_stored_settings_snapshot, build_stored_tick_snapshot, collect_tick, diff_settings, diff_tick,
 };
 use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 use std::{env, time::Duration};
 use tokio::time::sleep;
 
 async fn connect_db() -> Result<Pool<Postgres>, sqlx::Error> {
-    let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgresql://postgres@127.0.0.1:5433/pg_wal_visualizer".to_string());
+    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "postgresql://postgres@127.0.0.1:5433/pg_wal_visualizer".to_string());
 
-    PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&database_url)
-        .await
+    PgPoolOptions::new().max_connections(5).connect(&database_url).await
 }
 
 const INTERVAL: Duration = Duration::new(1, 0);
@@ -85,16 +78,12 @@ async fn main() -> anyhow::Result<()> {
             println!("{event:#?}");
         }
 
-        let settings_changed_mask = diff_settings(
-            last_tick.as_ref().map(|tick| tick.settings.as_slice()),
-            &tick.settings,
-        );
+        let settings_changed_mask = diff_settings(last_tick.as_ref().map(|tick| tick.settings.as_slice()), &tick.settings);
         let changed_mask = diff_tick(last_tick.as_ref(), &tick);
         let stored_tick = build_stored_tick_snapshot(&tick, changed_mask);
 
         if settings_changed_mask != 0 {
-            let stored_settings =
-                build_stored_settings_snapshot(&tick.settings, settings_changed_mask);
+            let stored_settings = build_stored_settings_snapshot(&tick.settings, settings_changed_mask);
             append_settings_snapshot(&log_path, &stored_settings)?;
         }
 

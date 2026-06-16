@@ -1,11 +1,10 @@
 use crate::events::EventSnapshot;
 use crate::storage::{
-    FILE_HEADER_LEN, RECORD_HEADER_LEN, RECORD_KIND_EVENT_SNAPSHOT, RECORD_KIND_SETTINGS_SNAPSHOT,
-    RECORD_KIND_TICK_SNAPSHOT, main_log_path,
+    FILE_HEADER_LEN, RECORD_HEADER_LEN, RECORD_KIND_EVENT_SNAPSHOT, RECORD_KIND_SETTINGS_SNAPSHOT, RECORD_KIND_TICK_SNAPSHOT, main_log_path,
 };
 use crate::tick::{
-    StoredPgStatRecoveryPrefetchRow, StoredPgStatWalReceiverRow, StoredSettingsSnapshot,
-    StoredTickSnapshot, StoredWalDirStats, StoredWalFunctionsRow,
+    StoredPgStatRecoveryPrefetchRow, StoredPgStatWalReceiverRow, StoredSettingsSnapshot, StoredTickSnapshot, StoredWalDirStats,
+    StoredWalFunctionsRow,
 };
 use rkyv::{Archive, Deserialize, Infallible, archived_root};
 use std::{fs, io, path::Path};
@@ -21,18 +20,9 @@ pub struct RecordHeader {
 
 #[derive(Debug, Clone)]
 pub enum MainLogRecord {
-    Tick {
-        header: RecordHeader,
-        payload: StoredTickSnapshot,
-    },
-    Settings {
-        header: RecordHeader,
-        payload: StoredSettingsSnapshot,
-    },
-    Event {
-        header: RecordHeader,
-        payload: EventSnapshot,
-    },
+    Tick { header: RecordHeader, payload: StoredTickSnapshot },
+    Settings { header: RecordHeader, payload: StoredSettingsSnapshot },
+    Event { header: RecordHeader, payload: EventSnapshot },
 }
 
 #[derive(Debug, Clone, Default)]
@@ -90,18 +80,11 @@ pub fn read_from(path: &Path, start_offset: u64) -> io::Result<ReadResult> {
         let payload_bytes = &bytes[payload_start..payload_end];
 
         let record = match header.kind {
-            RECORD_KIND_TICK_SNAPSHOT => MainLogRecord::Tick {
-                header,
-                payload: decode_payload::<StoredTickSnapshot>(payload_bytes)?,
-            },
-            RECORD_KIND_SETTINGS_SNAPSHOT => MainLogRecord::Settings {
-                header,
-                payload: decode_payload::<StoredSettingsSnapshot>(payload_bytes)?,
-            },
-            RECORD_KIND_EVENT_SNAPSHOT => MainLogRecord::Event {
-                header,
-                payload: decode_payload::<EventSnapshot>(payload_bytes)?,
-            },
+            RECORD_KIND_TICK_SNAPSHOT => MainLogRecord::Tick { header, payload: decode_payload::<StoredTickSnapshot>(payload_bytes)? },
+            RECORD_KIND_SETTINGS_SNAPSHOT => {
+                MainLogRecord::Settings { header, payload: decode_payload::<StoredSettingsSnapshot>(payload_bytes)? }
+            }
+            RECORD_KIND_EVENT_SNAPSHOT => MainLogRecord::Event { header, payload: decode_payload::<EventSnapshot>(payload_bytes)? },
             _ => {
                 offset = payload_end;
                 continue;
@@ -112,12 +95,7 @@ pub fn read_from(path: &Path, start_offset: u64) -> io::Result<ReadResult> {
         offset = payload_end;
     }
 
-    Ok(ReadResult {
-        records,
-        progress: ReadProgress {
-            next_offset: offset as u64,
-        },
-    })
+    Ok(ReadResult { records, progress: ReadProgress { next_offset: offset as u64 } })
 }
 
 pub fn read_from_default(start_offset: u64) -> io::Result<ReadResult> {
@@ -186,7 +164,5 @@ where
     T::Archived: Deserialize<T, Infallible>,
 {
     let archived = unsafe { archived_root::<T>(bytes) };
-    archived
-        .deserialize(&mut Infallible)
-        .map_err(|never| match never {})
+    archived.deserialize(&mut Infallible).map_err(|never| match never {})
 }

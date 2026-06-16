@@ -56,12 +56,7 @@ fn walk(path: &Path) -> io::Result<WalDirStats> {
 
     files.sort();
 
-    Ok(WalDirStats {
-        total_size_logical,
-        total_size_physical,
-        n_files,
-        files,
-    })
+    Ok(WalDirStats { total_size_logical, total_size_physical, n_files, files })
 }
 
 pub fn human_size(bytes: u64) -> String {
