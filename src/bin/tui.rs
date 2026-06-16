@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use pg_wal_visualizer::charts_data::{
+use walobserver::charts_data::{
     ChartsData, SeriesPoint, SlotRetentionChart, StandbyReplayChart, WalActivityChart, WalAmplificationChart, build_charts,
 };
-use pg_wal_visualizer::events::{DbRole, EventSnapshot};
-use pg_wal_visualizer::readers::main_log::{MainLogRecord, MaterializedTickState, ReadResult, apply_tick_snapshot, read_all_default};
-use pg_wal_visualizer::tick::StoredSettingRow;
+use walobserver::events::{DbRole, EventSnapshot};
+use walobserver::readers::main_log::{MainLogRecord, MaterializedTickState, ReadResult, apply_tick_snapshot, read_all_default};
+use walobserver::tick::StoredSettingRow;
 
 use ratatui::{
     DefaultTerminal, Frame,
@@ -192,7 +192,7 @@ fn build_overview(
     OverviewData { role, connection, connected, status, latest_tick, wal_dir, wal_position, settings }
 }
 
-fn current_role(wal_functions: &pg_wal_visualizer::tick::StoredWalFunctionsRow) -> DbRole {
+fn current_role(wal_functions: &walobserver::tick::StoredWalFunctionsRow) -> DbRole {
     if wal_functions.is_in_recovery { DbRole::Standby } else { DbRole::Primary }
 }
 
@@ -277,7 +277,7 @@ fn poll_chart_data(app: &mut App) {
 
 // Poll the actual database connection and update only the live connection box.
 fn poll_connection_status(app: &mut App) {
-    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "postgresql://postgres@127.0.0.1:5433/pg_wal_visualizer".to_string());
+    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "postgresql://postgres@127.0.0.1:5433/walobserver".to_string());
 
     let connected = Builder::new_current_thread()
         .enable_all()
@@ -506,7 +506,7 @@ fn render(frame: &mut Frame, app: &mut App) {
     //////// ==================================== //////////////////////
 
     // title (centered, top edge of main frame)
-    let title = Line::from(" WAL Visualizer ".bold());
+    let title = Line::from(" WALObserver ".bold());
 
     // insutctions (centered, bottom edge of main frame)
     let instructions = Line::from(vec![

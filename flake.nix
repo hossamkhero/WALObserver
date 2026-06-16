@@ -1,5 +1,5 @@
 {
-  description = "Development environment for pg_wal_visualizer";
+  description = "Development environment for WALObserver";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -28,12 +28,12 @@
             export PGHOST="$PWD/.local/postgres"
             export PGPORT="5433"
             export PGUSER="postgres"
-            export PGDATABASE="pg_wal_visualizer"
+            export PGDATABASE="walobserver"
             export DATABASE_URL="postgresql://$PGUSER@127.0.0.1:$PGPORT/$PGDATABASE"
 
             mkdir -p "$PWD/.local"
 
-            echo "pg_wal_visualizer dev shell"
+            echo "WALObserver dev shell"
             echo "  PGDATA=$PGDATA"
             echo "  DATABASE_URL=$DATABASE_URL"
           '';

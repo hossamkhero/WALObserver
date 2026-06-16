@@ -1697,27 +1697,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pg_wal_visualizer"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "color-eyre",
- "crossterm",
- "ratatui",
- "rkyv",
- "rust_decimal",
- "serde",
- "serde_json",
- "sqlx",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "phf"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3181,6 +3160,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d9b2acfb050df409c972a37d3b8e08cdea3bddb0c09db9d53137e504cfabed0"
 dependencies = [
  "utf8parse",
+]
+
+[[package]]
+name = "walobserver"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "color-eyre",
+ "crossterm",
+ "ratatui",
+ "rkyv",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

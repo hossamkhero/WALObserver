@@ -8,8 +8,10 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-// Wal Inspector storage lives under its own hidden directory.
-const STORAGE_DIR: &str = ".walinspector";
+// WALObserver storage lives under its own hidden directory.
+// Keep the old directory as a fallback so existing local data still opens after the rename.
+const STORAGE_DIR: &str = ".walobserver";
+const LEGACY_STORAGE_DIR: &str = ".walinspector";
 const LOG_FILENAME: &str = "main.log";
 const CHECKPOINT_FILENAME: &str = "checkpoints.log";
 
@@ -93,7 +95,19 @@ pub fn init_storage() -> io::Result<(PathBuf, PathBuf)> {
 }
 
 pub fn storage_dir_path() -> PathBuf {
-    PathBuf::from(STORAGE_DIR)
+    let new_path = PathBuf::from(STORAGE_DIR);
+
+    if new_path.exists() {
+        return new_path;
+    }
+
+    let legacy_path = PathBuf::from(LEGACY_STORAGE_DIR);
+
+    if legacy_path.exists() {
+        return legacy_path;
+    }
+
+    new_path
 }
 
 pub fn main_log_path() -> PathBuf {

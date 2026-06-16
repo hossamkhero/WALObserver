@@ -6,7 +6,7 @@ PGDATA="${PGDATA:-$ROOT_DIR/.local/postgres}"
 PGHOST="${PGHOST:-$PGDATA}"
 PGPORT="${PGPORT:-5433}"
 PGUSER="${PGUSER:-postgres}"
-PGDATABASE="${PGDATABASE:-pg_wal_visualizer}"
+PGDATABASE="${PGDATABASE:-walobserver}"
 
 mkdir -p "$PGDATA"
 
