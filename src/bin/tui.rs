@@ -618,16 +618,18 @@ fn render_wal_activity_chart(
     frame.render_widget(block, area);
 
     let vertical = Layout::vertical([Constraint::Fill(1), Constraint::Fill(1)]).split(inner);
-    max_offsets[0] = series_max_offset(vertical[0], &[("wal_bytes/sec", &chart.wal_bytes_per_sec, Color::Yellow)]);
-    max_offsets[1] = series_max_offset(vertical[1], &[("wal_records/sec", &chart.wal_records_per_sec, Color::Cyan)]);
-
-    if start_at_latest {
-        x_offsets[0] = max_offsets[0];
-        x_offsets[1] = max_offsets[1];
-    } else {
-        x_offsets[0] = x_offsets[0].clamp(0.0, max_offsets[0]);
-        x_offsets[1] = x_offsets[1].clamp(0.0, max_offsets[1]);
-    }
+    sync_strip_offset(
+        &mut x_offsets[0],
+        &mut max_offsets[0],
+        series_max_offset(vertical[0], &[("wal_bytes/sec", &chart.wal_bytes_per_sec, Color::Yellow)]),
+        start_at_latest,
+    );
+    sync_strip_offset(
+        &mut x_offsets[1],
+        &mut max_offsets[1],
+        series_max_offset(vertical[1], &[("wal_records/sec", &chart.wal_records_per_sec, Color::Cyan)]),
+        start_at_latest,
+    );
 
     render_series_chart(
         frame,
@@ -676,16 +678,18 @@ fn render_slot_retention_chart(
     frame.render_widget(block, area);
 
     let vertical = Layout::vertical([Constraint::Fill(1), Constraint::Fill(1)]).split(inner);
-    max_offsets[0] = series_max_offset(vertical[0], &[("worst_slot_lag_bytes", &chart.worst_slot_lag_bytes, Color::Magenta)]);
-    max_offsets[1] = series_max_offset(vertical[1], &[("wal_dir.n_files", &chart.wal_dir_file_count, Color::Blue)]);
-
-    if start_at_latest {
-        x_offsets[0] = max_offsets[0];
-        x_offsets[1] = max_offsets[1];
-    } else {
-        x_offsets[0] = x_offsets[0].clamp(0.0, max_offsets[0]);
-        x_offsets[1] = x_offsets[1].clamp(0.0, max_offsets[1]);
-    }
+    sync_strip_offset(
+        &mut x_offsets[0],
+        &mut max_offsets[0],
+        series_max_offset(vertical[0], &[("worst_slot_lag_bytes", &chart.worst_slot_lag_bytes, Color::Magenta)]),
+        start_at_latest,
+    );
+    sync_strip_offset(
+        &mut x_offsets[1],
+        &mut max_offsets[1],
+        series_max_offset(vertical[1], &[("wal_dir.n_files", &chart.wal_dir_file_count, Color::Blue)]),
+        start_at_latest,
+    );
 
     render_series_chart(
         frame,
@@ -728,19 +732,24 @@ fn render_wal_amplification_chart(
     frame.render_widget(block, area);
 
     let vertical = Layout::vertical([Constraint::Fill(1), Constraint::Fill(1), Constraint::Fill(1)]).split(inner);
-    max_offsets[0] = series_max_offset(vertical[0], &[("wal_bytes/record", &chart.wal_bytes_per_record, Color::Yellow)]);
-    max_offsets[1] = series_max_offset(vertical[1], &[("updates/sec", &chart.updates_per_sec, Color::Green)]);
-    max_offsets[2] = series_max_offset(vertical[2], &[("hot_update_ratio", &chart.hot_update_ratio, Color::Cyan)]);
-
-    if start_at_latest {
-        x_offsets[0] = max_offsets[0];
-        x_offsets[1] = max_offsets[1];
-        x_offsets[2] = max_offsets[2];
-    } else {
-        x_offsets[0] = x_offsets[0].clamp(0.0, max_offsets[0]);
-        x_offsets[1] = x_offsets[1].clamp(0.0, max_offsets[1]);
-        x_offsets[2] = x_offsets[2].clamp(0.0, max_offsets[2]);
-    }
+    sync_strip_offset(
+        &mut x_offsets[0],
+        &mut max_offsets[0],
+        series_max_offset(vertical[0], &[("wal_bytes/record", &chart.wal_bytes_per_record, Color::Yellow)]),
+        start_at_latest,
+    );
+    sync_strip_offset(
+        &mut x_offsets[1],
+        &mut max_offsets[1],
+        series_max_offset(vertical[1], &[("updates/sec", &chart.updates_per_sec, Color::Green)]),
+        start_at_latest,
+    );
+    sync_strip_offset(
+        &mut x_offsets[2],
+        &mut max_offsets[2],
+        series_max_offset(vertical[2], &[("hot_update_ratio", &chart.hot_update_ratio, Color::Cyan)]),
+        start_at_latest,
+    );
 
     render_series_chart(
         frame,
@@ -793,16 +802,18 @@ fn render_standby_replay_chart(
     frame.render_widget(block, area);
 
     let vertical = Layout::vertical([Constraint::Fill(1), Constraint::Fill(1)]).split(inner);
-    max_offsets[0] = series_max_offset(vertical[0], &[("receive_lsn_progress", &chart.receive_lsn_progress, Color::LightBlue)]);
-    max_offsets[1] = series_max_offset(vertical[1], &[("replay_lsn_progress", &chart.replay_lsn_progress, Color::LightGreen)]);
-
-    if start_at_latest {
-        x_offsets[0] = max_offsets[0];
-        x_offsets[1] = max_offsets[1];
-    } else {
-        x_offsets[0] = x_offsets[0].clamp(0.0, max_offsets[0]);
-        x_offsets[1] = x_offsets[1].clamp(0.0, max_offsets[1]);
-    }
+    sync_strip_offset(
+        &mut x_offsets[0],
+        &mut max_offsets[0],
+        series_max_offset(vertical[0], &[("receive_lsn_progress", &chart.receive_lsn_progress, Color::LightBlue)]),
+        start_at_latest,
+    );
+    sync_strip_offset(
+        &mut x_offsets[1],
+        &mut max_offsets[1],
+        series_max_offset(vertical[1], &[("replay_lsn_progress", &chart.replay_lsn_progress, Color::LightGreen)]),
+        start_at_latest,
+    );
 
     render_series_chart(
         frame,
@@ -906,6 +917,19 @@ fn render_series_chart(
         );
 
     frame.render_widget(chart, chart_area);
+}
+
+fn sync_strip_offset(x_offset: &mut f64, max_offset: &mut f64, new_max_offset: f64, start_at_latest: bool) {
+    let previous_max_offset = *max_offset;
+    *max_offset = new_max_offset;
+
+    if start_at_latest {
+        *x_offset = new_max_offset;
+        return;
+    }
+
+    let right_gap = (previous_max_offset - *x_offset).max(0.0);
+    *x_offset = (new_max_offset - right_gap).clamp(0.0, new_max_offset);
 }
 
 fn format_ts_label(ts_ms: f64) -> String {
